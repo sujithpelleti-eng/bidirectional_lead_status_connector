@@ -254,8 +254,8 @@ if __name__ == "__main__":
         "api_url": "https://www.yardipcv.com/8223tp7s7snr/WebServices/ItfSeniorResidentData.asmx",
         "credentials": {
             "username": "caringws",
-            "password": "W!tLUk22oMZJEXb",
-            "license": "MIIBEAYJKwYBBAGCN1gDoIIBATCB/gYKKwYBBAGCN1gDAaCB7zCB7AIDAgABAgJoAQICAIAEAAQQ/zrUM5V4Qr2KBVWEc5edvQSByGh5TyWjIKGTM+lVzCjVodDBj+t6QaGH/Sm+Rg4dq8hF6VyrBtoHAR2DUFTAAuVNws/mRdtWozYBDQ6FgDbnpsLJ+jcEpv+FYYtZWWRS0lpkH9DUxMN4OSvGB98kQwzBlKVeSWRGlxJZhG6YAvCbHudnl25BeDFjFKuzq3rov+yKGpYpCEdIKxbn+Pl7sTd1GrpKg8Rf5G1zjkbAiiTNybK0iI+KV6xv08ZX5YkTpm938cmnYgFYCo3OKO5TA2pIjpGeWg2qNgbc",
+            "password": "W!dummy",
+            "license": "dummy",
             "ServerName": "afqoml_senior_itf",
             "Database": "afqoml_senior_itf",
             "InterfaceEntity": "Caring.com",
