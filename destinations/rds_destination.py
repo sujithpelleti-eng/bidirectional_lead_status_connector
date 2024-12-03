@@ -1,15 +1,18 @@
-import os
 import json
 import logging
+import os
 from dataclasses import asdict, is_dataclass
-from typing import List, Dict, Any
 from datetime import datetime
+from typing import Any, Dict, List
 
 from common.models import StatusUpdateQueue
 from common.postgres_connector import PostgresDatabase
 
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class RDSDestination:
     """
@@ -25,7 +28,9 @@ class RDSDestination:
         self._db = db
         self._table_name = table_name
 
-    def _convert_data_for_insert(self, data: List[StatusUpdateQueue]) -> List[Dict[str, Any]]:
+    def _convert_data_for_insert(
+        self, data: List[StatusUpdateQueue]
+    ) -> List[Dict[str, Any]]:
         """
         Convert a list of StatusUpdateQueue dataclass instances to a list of dictionaries.
         :param data: List of StatusUpdateQueue instances
@@ -51,12 +56,14 @@ class RDSDestination:
         if not data:
             logger.warning("No data provided to insert.")
             return
-        
+
         # Filter out records with null 'lead_id'
         filtered_data = [item for item in data if item.lead_id not in [None, ""]]
 
         if not filtered_data:
-            logger.warning("No data to insert after filtering out records with null 'lead_id'.")
+            logger.warning(
+                "No data to insert after filtering out records with null 'lead_id'."
+            )
             return
 
         # Convert dataclass instances to dictionaries if needed
@@ -73,11 +80,13 @@ class RDSDestination:
         if not data:
             logger.warning("No data to insert in bulk.")
             return
-        
+
         # Serialize the 'lead_json' field to JSON string if it exists
         for record in data:
-            if 'lead_json' in record:
-                record['lead_json'] = json.dumps(record['lead_json'])  # Convert dict to JSON string
+            if "lead_json" in record:
+                record["lead_json"] = json.dumps(
+                    record["lead_json"]
+                )  # Convert dict to JSON string
 
         # SQL for bulk insert
         insert_query = f"""
@@ -85,7 +94,7 @@ class RDSDestination:
             (execution_id, system_config_id, lead_id, status, sub_status, notes, lead_json, attempts, last_attempt, is_delivered)
             VALUES (%(execution_id)s, %(system_config_id)s, %(lead_id)s, %(status)s, %(sub_status)s, %(notes)s, %(lead_json)s, %(attempts)s, %(last_attempt)s, %(is_delivered)s)
         """
-        
+
         try:
             with self._db._engine.begin() as connection:
                 logger.info(f"Inserting {len(data)} records into {self._table_name}.")
@@ -105,10 +114,15 @@ if __name__ == "__main__":
             status="valid_lead",
             sub_status="timeframe_30",
             notes="Customer may move within 30 days.",
-            lead_json={'lead_id': '28955', 'status': 'tour_completed', 'sub_status': '', 'notes': 'Tour completed on 10/21/2024 12:00:00 AM'},
+            lead_json={
+                "lead_id": "28955",
+                "status": "tour_completed",
+                "sub_status": "",
+                "notes": "Tour completed on 10/21/2024 12:00:00 AM",
+            },
             attempts=0,
             last_attempt=datetime.now(),
-            is_delivered=False
+            is_delivered=False,
         ),
         # Add more records as needed
     ]

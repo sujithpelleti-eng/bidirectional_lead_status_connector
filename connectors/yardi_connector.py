@@ -1,19 +1,23 @@
+import logging
 import os
 import sys
-import logging
 from datetime import datetime, timedelta
+
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from typing import Any, Dict, List
 
 from connectors.base_soap_connector import BaseSOAPConnector
 from parsers.yardi_parser import YardiParser
-from typing import List, Dict, Any  
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
+
 class YardiConnector(BaseSOAPConnector):
-    
     def __init__(self, config: dict):
         """
         Initializes the YardiConnector with configuration parameters and sets up the parser.
@@ -21,10 +25,10 @@ class YardiConnector(BaseSOAPConnector):
         :param config: Configuration dictionary containing API URL, _credentials, and namespace.
         """
         super().__init__(config)
-        self._api_url = config.get('api_url')
-        self._credentials = config.get('credentials')
-        self._namespace = config.get('namespace')
-        self._base_url = config.get('base_url')
+        self._api_url = config.get("api_url")
+        self._credentials = config.get("credentials")
+        self._namespace = config.get("namespace")
+        self._base_url = config.get("base_url")
 
         # self._api_url = config.get('api_url')
         # self._credentials = config.get('_credentials')  # Ensure this is properly set
@@ -34,7 +38,7 @@ class YardiConnector(BaseSOAPConnector):
         # Check if credentials or other required fields are None
         if not all([self._credentials, self._api_url, self._namespace]):
             raise ValueError("Missing configuration parameters.")
-        
+
         logger.info("YardiConnector initialized with provided configuration.")
 
     def build_request(self, method: str, body_content: str) -> str:
@@ -65,16 +69,15 @@ class YardiConnector(BaseSOAPConnector):
         :return: Parsed response data.
         """
         logger.info(f"Sending request for {method} with SOAP action: {soap_action}")
-        headers = {
-            "Content-Type": "text/xml; charset=utf-8",
-            "SOAPAction": soap_action
-        }
+        headers = {"Content-Type": "text/xml; charset=utf-8", "SOAPAction": soap_action}
         request_xml = self.build_request(method, body_content)
         response = self._send_soap_request(self._base_url, headers, request_xml)
         logger.debug(f"Received response for {method}")
         return response
 
-    def fetch_raw_data(self, from_date: str = "", to_date: str = "", full_refresh: bool = False) -> Dict[str, Dict[str, Any]]:
+    def fetch_raw_data(
+        self, from_date: str = "", to_date: str = "", full_refresh: bool = False
+    ) -> Dict[str, Dict[str, Any]]:
         """
         Fetches raw data from multiple Yardi endpoints for each YardiPropertyId.
 
@@ -87,44 +90,80 @@ class YardiConnector(BaseSOAPConnector):
         if not from_date or not to_date:
             raise ValueError("Both 'from_date' and 'to_date' must be provided.")
 
-        logger.info(f"Fetching raw data from {from_date} to {to_date} for all YardiPropertyIds.")
+        logger.info(
+            f"Fetching raw data from {from_date} to {to_date} for all YardiPropertyIds."
+        )
         raw_data = {
             "GetSeniorProspectActivity_tour_activity": {},
             # "GetSeniorResidentsByStatus": {},
             "GetSeniorResidentsADTEvents_movein": {},
-            "GetSeniorProspectActivity_valid_lead": {}
+            "GetSeniorProspectActivity_valid_lead": {},
         }
 
-        for yardi_property_id in self._credentials['YardiPropertyId']:
+        for yardi_property_id in self._credentials["YardiPropertyId"]:
             logger.info(f"Processing YardiPropertyId: {yardi_property_id}")
-            raw_data["GetSeniorProspectActivity_tour_activity"][yardi_property_id] = self._fetch_tour_activity(
+            raw_data["GetSeniorProspectActivity_tour_activity"][
+                yardi_property_id
+            ] = self._fetch_tour_activity(
                 yardi_property_id=yardi_property_id,
-                activity_categoty='Tours',
+                activity_categoty="Tours",
                 from_date=from_date,
-                to_date=to_date
+                to_date=to_date,
             )
-            raw_data["GetSeniorResidentsADTEvents_movein"][yardi_property_id] = self._fetch_adt_events(
+            raw_data["GetSeniorResidentsADTEvents_movein"][
+                yardi_property_id
+            ] = self._fetch_adt_events(
                 yardi_property_id=yardi_property_id,
-                event_type='Move In',
+                event_type="Move In",
                 from_date=from_date,
-                to_date=to_date
+                to_date=to_date,
             )
-            raw_data["GetSeniorProspectActivity_valid_lead"][yardi_property_id] = self._fetch_lead_status_change(
+            raw_data["GetSeniorProspectActivity_valid_lead"][
+                yardi_property_id
+            ] = self._fetch_lead_status_change(
                 yardi_property_id=yardi_property_id,
-                activity_categoty='Status Change',
+                activity_categoty="Status Change",
                 from_date=from_date,
-                to_date=to_date
+                to_date=to_date,
             )
 
         return raw_data
 
-    def _fetch_tour_activity(self, yardi_property_id: str, activity_categoty: str, from_date: str, to_date: str) -> List[Dict[str, Any]]:
-        return self._fetch_senior_prospect_activity(yardi_property_id=yardi_property_id, activity_categoty=activity_categoty, from_date=from_date, to_date=to_date)
-    
-    def _fetch_lead_status_change(self, yardi_property_id: str, activity_categoty: str, from_date: str, to_date: str) -> List[Dict[str, Any]]:
-        return self._fetch_senior_prospect_activity(yardi_property_id=yardi_property_id, activity_categoty=activity_categoty, from_date=from_date, to_date=to_date)
+    def _fetch_tour_activity(
+        self,
+        yardi_property_id: str,
+        activity_categoty: str,
+        from_date: str,
+        to_date: str,
+    ) -> List[Dict[str, Any]]:
+        return self._fetch_senior_prospect_activity(
+            yardi_property_id=yardi_property_id,
+            activity_categoty=activity_categoty,
+            from_date=from_date,
+            to_date=to_date,
+        )
 
-    def _fetch_senior_prospect_activity(self, yardi_property_id: str, activity_categoty: str, from_date: str, to_date: str) -> List[Dict[str, Any]]:
+    def _fetch_lead_status_change(
+        self,
+        yardi_property_id: str,
+        activity_categoty: str,
+        from_date: str,
+        to_date: str,
+    ) -> List[Dict[str, Any]]:
+        return self._fetch_senior_prospect_activity(
+            yardi_property_id=yardi_property_id,
+            activity_categoty=activity_categoty,
+            from_date=from_date,
+            to_date=to_date,
+        )
+
+    def _fetch_senior_prospect_activity(
+        self,
+        yardi_property_id: str,
+        activity_categoty: str,
+        from_date: str,
+        to_date: str,
+    ) -> List[Dict[str, Any]]:
         """
         Fetches prospect activities for a given Yardi property ID and activity result type.
 
@@ -155,10 +194,12 @@ class YardiConnector(BaseSOAPConnector):
         return self._send_request(
             "GetSeniorProspectActivity",
             body_content,
-            f"{self._namespace}/GetSeniorProspectActivity"
+            f"{self._namespace}/GetSeniorProspectActivity",
         )
 
-    def _fetch_senior_residents_by_status(self, yardi_property_id, status: str = "") -> List[Dict[str, Any]]:
+    def _fetch_senior_residents_by_status(
+        self, yardi_property_id, status: str = ""
+    ) -> List[Dict[str, Any]]:
         body_content = f"""
             <UserName>{self._credentials['username']}</UserName>
             <Password>{self._credentials['password']}</Password>
@@ -175,11 +216,17 @@ class YardiConnector(BaseSOAPConnector):
         return self._send_request(
             "GetSeniorResidentsByStatus",
             body_content,
-            f"{self._namespace}/GetSeniorResidentsByStatus"
+            f"{self._namespace}/GetSeniorResidentsByStatus",
         )
         # return self._parser.parse(response, "Yardi", "GetSeniorResidentsByStatus")
 
-    def _fetch_adt_events(self, yardi_property_id, event_type: str = "", from_date: str = "", to_date: str = "") -> List[Dict[str, Any]]:
+    def _fetch_adt_events(
+        self,
+        yardi_property_id,
+        event_type: str = "",
+        from_date: str = "",
+        to_date: str = "",
+    ) -> List[Dict[str, Any]]:
         body_content = f"""
             <UserName>{self._credentials['username']}</UserName>
             <Password>{self._credentials['password']}</Password>
@@ -197,7 +244,7 @@ class YardiConnector(BaseSOAPConnector):
         return self._send_request(
             "GetSeniorResidentsADTEvents",
             body_content,
-            f"{self._namespace}/GetSeniorResidentsADTEvents"
+            f"{self._namespace}/GetSeniorResidentsADTEvents",
         )
         # return self._parser.parse(response, "Yardi", "GetSeniorResidentsADTEvents")
 
@@ -212,17 +259,17 @@ if __name__ == "__main__":
             "ServerName": "afqoml_senior_itf",
             "Database": "afqoml_senior_itf",
             "InterfaceEntity": "Caring.com",
-            "YardiPropertyId": ["c1233"]
+            "YardiPropertyId": ["c1233"],
         },
         "base_url": "https://www.yardipcv.com/8223tp7s7snr/WebServices/ItfSeniorResidentData.asmx",
-        "namespace": "http://tempuri.org/YSI.Senior.SeniorInterface.WebServices/ItfSeniorResidentData"
+        "namespace": "http://tempuri.org/YSI.Senior.SeniorInterface.WebServices/ItfSeniorResidentData",
     }
-    
+
     yc = YardiConnector(config)
     results = yc.fetch_raw_data(from_date="2024-12-01", to_date="2024-12-03")
     # results = yc.fetch_raw_data(full_refresh=True)
     # results = yc.fetch_raw_data()
     # print(results)
-    yp = YardiParser(1,'65865858585')
+    yp = YardiParser(1, "65865858585")
     final_result = yp.parse(results)
     print(final_result)

@@ -1,18 +1,21 @@
-import requests
-from abc import ABC, abstractmethod
-from typing import List, Dict, Any
 import logging
+from abc import ABC, abstractmethod
+from typing import Any, Dict, List
+
+import requests
 
 logger = logging.getLogger(__name__)
+
 
 class BaseSOAPConnector(ABC):
     """
     Abstract base class for SOAP connectors, providing a base implementation
     for sending SOAP requests.
     """
+
     def __init__(self, config: dict):
-        self._api_url = config.get('api_url')
-        self._credentials = config.get('credentials')
+        self._api_url = config.get("api_url")
+        self._credentials = config.get("credentials")
         # logger.info("Initialized BaseSOAPConnector with provided configuration.")
 
     @abstractmethod

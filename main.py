@@ -1,22 +1,28 @@
 import argparse
+import logging
 import os
 import sys
-import logging
 from datetime import datetime, timedelta
-from orchestrator import Orchestrator
+
 from async_status_update import StatusUpdatePoster
 from common.postgres_connector import PostgresDatabase
 from common.utils import fetch_api_config
+from orchestrator import Orchestrator
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 def main():
     """
     Main function to control the flow based on command-line arguments.
     """
-    parser = argparse.ArgumentParser(description="Run the Orchestrator or Status Update Poster.")
+    parser = argparse.ArgumentParser(
+        description="Run the Orchestrator or Status Update Poster."
+    )
     parser.add_argument(
         "--action",
         type=str,
@@ -24,18 +30,25 @@ def main():
         choices=["orchestrator", "post_status_updates"],
         help="Action to perform: orchestrator or post_status_updates",
     )
-    parser.add_argument("--schedule", type=str, help="Schedule filter for configurations.")
+    parser.add_argument(
+        "--schedule", type=str, help="Schedule filter for configurations."
+    )
     parser.add_argument("--system", type=str, help="System filter for configurations.")
-    parser.add_argument("--partner_id", type=str, help="Partner_id filter for configurations.")
+    parser.add_argument(
+        "--partner_id", type=str, help="Partner_id filter for configurations."
+    )
     # parser.add_argument("--post_threshold", type=int, default=10, help="Max retry attempts for posting status updates.")
-    parser.add_argument("--from-date", type=str, help="Start date for data fetch (YYYY-MM-DD).")
-    parser.add_argument("--to-date", type=str, help="End date for data fetch (YYYY-MM-DD).")
+    parser.add_argument(
+        "--from-date", type=str, help="Start date for data fetch (YYYY-MM-DD)."
+    )
+    parser.add_argument(
+        "--to-date", type=str, help="End date for data fetch (YYYY-MM-DD)."
+    )
     parser.add_argument(
         "--full-refresh",
         action="store_true",
         help="Fetch data for the last year if no dates are provided.",
     )
-
 
     args = parser.parse_args()
 
@@ -44,7 +57,9 @@ def main():
     if args.full_refresh:
         from_date = (datetime.now() - timedelta(days=365)).strftime("%Y-%m-%dT00:00:00")
         to_date = datetime.now().strftime("%Y-%m-%dT00:00:00")
-        logger.info(f"Full refresh selected: Fetching data from {from_date} to {to_date}")
+        logger.info(
+            f"Full refresh selected: Fetching data from {from_date} to {to_date}"
+        )
     elif args.from_date and args.to_date:
         from_date = args.from_date
         to_date = args.to_date
@@ -53,7 +68,6 @@ def main():
         from_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%dT00:00:00")
         to_date = datetime.now().strftime("%Y-%m-%dT00:00:00")
         logger.info(f"Incremental fetch: Fetching data from {from_date} to {to_date}")
-
 
     # Initialize the database connection
     db = PostgresDatabase(
@@ -82,7 +96,9 @@ def main():
             sys.exit(1)
 
         # Run the Status Update Poster
-        poster = StatusUpdatePoster(db, config=api_config, post_threshold=args.post_threshold)
+        poster = StatusUpdatePoster(
+            db, config=api_config, post_threshold=args.post_threshold
+        )
         poster.process_updates()
 
 

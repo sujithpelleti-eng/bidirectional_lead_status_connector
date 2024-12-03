@@ -1,13 +1,15 @@
-import boto3
 import gzip
 import json
 import logging
+import os
 import xml.etree.ElementTree as ET
 from datetime import datetime
 from typing import Any, Dict, Union
-import os
+
+import boto3
 
 logger = logging.getLogger(__name__)
+
 
 class S3Destination:
     def __init__(self, bucket_name: str):
@@ -22,7 +24,13 @@ class S3Destination:
         )
         self.bucket_name = bucket_name
 
-    def send(self, data: Dict[str, Any], provider: str, partner_id: str, file_type: str = "json"):
+    def send(
+        self,
+        data: Dict[str, Any],
+        provider: str,
+        partner_id: str,
+        file_type: str = "json",
+    ):
         """
         Sends data to S3 dynamically creating file paths and filenames based on the structure of the data.
 
@@ -33,9 +41,11 @@ class S3Destination:
         try:
             if file_type not in ["json", "xml"]:
                 raise ValueError(f"Unsupported file type: {file_type}")
-                    
+
             # Validate data type for the specified file type
-            if file_type == "xml" and not isinstance(data, (str, bytes, dict, ET.Element)):
+            if file_type == "xml" and not isinstance(
+                data, (str, bytes, dict, ET.Element)
+            ):
                 raise ValueError("Invalid data type for XML file type")
 
             s3_paths = self._generate_s3_paths(data, provider, partner_id, file_type)
@@ -48,7 +58,9 @@ class S3Destination:
             logger.error(f"Error writing to S3: {str(e)}")
             raise Exception(f"S3Destination send error: {str(e)}")
 
-    def _prepare_body(self, content: Union[str, Dict[str, Any], ET.Element, bytes], file_type: str) -> bytes:
+    def _prepare_body(
+        self, content: Union[str, Dict[str, Any], ET.Element, bytes], file_type: str
+    ) -> bytes:
         """
         Prepares the body content for uploading to S3 by converting it to bytes.
 
@@ -87,7 +99,9 @@ class S3Destination:
                 Key=s3_path,
                 Body=body,
             )
-            logger.info(f"Successfully uploaded file to S3: {s3_path}, Size: {len(body)} bytes")
+            logger.info(
+                f"Successfully uploaded file to S3: {s3_path}, Size: {len(body)} bytes"
+            )
         except Exception as e:
             logger.error(f"Failed to upload file to S3: {s3_path}, Error: {str(e)}")
             raise
@@ -101,8 +115,10 @@ class S3Destination:
             else:
                 child.text = str(value)
         return root
-    
-    def _generate_s3_paths(self, data: Dict[str, Any], provider: str, partner_id: str, file_type: str) -> Dict[str, Union[str, Dict]]:
+
+    def _generate_s3_paths(
+        self, data: Dict[str, Any], provider: str, partner_id: str, file_type: str
+    ) -> Dict[str, Union[str, Dict]]:
         """
         Generates S3 paths for the data based on the specified partitioning structure.
 
@@ -136,7 +152,6 @@ class S3Destination:
                 s3_paths[s3_path] = content
 
         return s3_paths
-
 
     # def _generate_s3_paths(self, data: Dict[str, Any], prefix: str, file_type: str) -> Dict[str, Union[str, Dict]]:
     #     s3_paths = {}
@@ -179,4 +194,3 @@ if __name__ == "__main__":
 
     s3 = S3Destination(bucket_name="provider-integration")
     s3.send(xml_data, prefix="yardi-data", file_type="xml")
-

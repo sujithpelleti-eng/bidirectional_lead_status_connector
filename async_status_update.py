@@ -1,17 +1,23 @@
 import logging
-import requests
 from datetime import datetime
-from typing import List, Dict
+from typing import Dict, List
 
-from common.postgres_connector import PostgresDatabase
+import requests
+
 from common.models import StatusUpdateQueue
+from common.postgres_connector import PostgresDatabase
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
+
 class StatusUpdatePoster:
-    def __init__(self, db: PostgresDatabase, config: Dict[str, str], post_threshold: int = 10):
+    def __init__(
+        self, db: PostgresDatabase, config: Dict[str, str], post_threshold: int = 10
+    ):
         """
         Initialize the StatusUpdatePoster.
 
@@ -23,10 +29,14 @@ class StatusUpdatePoster:
         self.post_threshold = post_threshold
         self.api_config = config
         self.api_url = config.get("api_url")
-        self.headers = {"Caring-Partner": config.get("api_token")}  # Use token from config
+        self.headers = {
+            "Caring-Partner": config.get("api_token")
+        }  # Use token from config
 
         if not self.api_url or not self.headers.get("Caring-Partner"):
-            raise ValueError("API URL and API token must be provided in the configuration.")
+            raise ValueError(
+                "API URL and API token must be provided in the configuration."
+            )
 
     def fetch_records(self) -> List[StatusUpdateQueue]:
         """
@@ -61,7 +71,9 @@ class StatusUpdatePoster:
             )
             response_data = response.json()
             if response.status_code == 200:
-                logger.info(f"Successfully posted record {record.lead_id}: {response_data}")
+                logger.info(
+                    f"Successfully posted record {record.lead_id}: {response_data}"
+                )
                 return True
             else:
                 logger.error(f"Failed to post record {record.lead_id}: {response_data}")
@@ -70,7 +82,9 @@ class StatusUpdatePoster:
             logger.error(f"Error posting record {record.lead_id}: {e}")
             return False
 
-    def update_record(self, record: StatusUpdateQueue, success: bool, error_message: str = None):
+    def update_record(
+        self, record: StatusUpdateQueue, success: bool, error_message: str = None
+    ):
         """
         Update the database record after an attempt.
 

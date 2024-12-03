@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict
 from datetime import datetime
+from typing import Dict, List, Optional
+
 
 @dataclass
 class SystemConfiguration:
@@ -16,6 +17,7 @@ class SystemConfiguration:
     schedule: str
     is_active: str
 
+
 @dataclass
 class RunHistory:
     run_id: int
@@ -26,6 +28,7 @@ class RunHistory:
     start_time: str
     end_time: str
 
+
 @dataclass
 class ErrorLog:
     error_id: int
@@ -34,6 +37,7 @@ class ErrorLog:
     error_message: str
     step: str
     occurred_at: str
+
 
 @dataclass
 class StatusUpdateQueue:
@@ -49,7 +53,9 @@ class StatusUpdateQueue:
     is_delivered: bool = False
     created_at: datetime = field(default_factory=lambda: datetime.now())
     updated_at: datetime = field(default_factory=lambda: datetime.now())
-    status_update_id: Optional[int] = None  # Optional fields with defaults should go last
+    status_update_id: Optional[
+        int
+    ] = None  # Optional fields with defaults should go last
 
     def to_tuple(self):
         """
@@ -65,5 +71,5 @@ class StatusUpdateQueue:
             self.lead_json,
             self.attempts,
             self.last_attempt,
-            self.is_delivered
+            self.is_delivered,
         )

@@ -4,19 +4,24 @@ import xml.etree.ElementTree as ET
 from typing import Any, Dict, List
 
 from common.models import StatusUpdateQueue
+
 # Set up logging
-logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
+
 
 class YardiParser:
     """
     Parser class for Yardi API responses. Contains methods to parse specific types of responses
     for different Yardi endpoints.
     """
+
     def __init__(self, system_config_id: str, execution_id: str):
         """
         Initialize YardiParser with configuration data.
-        
+
         :param config: Configuration dictionary containing metadata for parsing.
         """
         self.system_config_id = system_config_id
@@ -40,9 +45,8 @@ class YardiParser:
             "valid_lead": 1,
             "tour_scheduled": 2,
             "tour_completed": 3,
-            "move_in_commitment": 4
+            "move_in_commitment": 4,
         }
-
 
         for endpoint_name, property_data in raw_data.items():
             for property_id, response in property_data.items():
@@ -53,7 +57,9 @@ class YardiParser:
                 elif endpoint_name == "GetSeniorResidentsADTEvents_movein":
                     parsed_data.extend(self._parse_adt_events(response, property_id))
                 elif endpoint_name == "GetSeniorProspectActivity_valid_lead":
-                    parsed_data.extend(self._parse_prospect_activity(response, property_id))
+                    parsed_data.extend(
+                        self._parse_prospect_activity(response, property_id)
+                    )
 
         # Group by lead_id and filter for the highest-priority, latest record
         for record in parsed_data:
@@ -61,21 +67,27 @@ class YardiParser:
             if not lead_id:
                 continue
 
-            current_priority = priority_map.get(record.status.lower(), float('inf'))
-            
+            current_priority = priority_map.get(record.status.lower(), float("inf"))
+
             if lead_id in grouped_by_lead:
                 existing_record = grouped_by_lead[lead_id]
-                existing_priority = priority_map.get(existing_record.status.lower(), float('inf'))
+                existing_priority = priority_map.get(
+                    existing_record.status.lower(), float("inf")
+                )
 
                 # Replace the record if it has a higher priority or the same priority but is more recent
-                if current_priority > existing_priority or (current_priority == existing_priority):
+                if current_priority > existing_priority or (
+                    current_priority == existing_priority
+                ):
                     grouped_by_lead[lead_id] = record
             else:
                 grouped_by_lead[lead_id] = record
         # return parsed_data
         return list(grouped_by_lead.values())
-    
-    def _parse_tour_activity(self, response: str, property_id: str) -> List[StatusUpdateQueue]:
+
+    def _parse_tour_activity(
+        self, response: str, property_id: str
+    ) -> List[StatusUpdateQueue]:
         """
         Parses the 'GetSeniorProspectActivity' response.
 
@@ -110,20 +122,22 @@ class YardiParser:
                         f"type '{activity_type}' for property ID {property_id}."
                     )
 
-                tours.append(StatusUpdateQueue(
-                    execution_id=self.execution_id,
-                    system_config_id=self.system_config_id,
-                    lead_id=lead_id,
-                    status=status,
-                    sub_status="N/A",
-                    notes=notes,
-                    lead_json={
-                        "lead_id": lead_id,
-                        "status": status,
-                        "sub_status": "N/A",
-                        "notes": notes,
-                    }
-                ))
+                tours.append(
+                    StatusUpdateQueue(
+                        execution_id=self.execution_id,
+                        system_config_id=self.system_config_id,
+                        lead_id=lead_id,
+                        status=status,
+                        sub_status="N/A",
+                        notes=notes,
+                        lead_json={
+                            "lead_id": lead_id,
+                            "status": status,
+                            "sub_status": "N/A",
+                            "notes": notes,
+                        },
+                    )
+                )
 
         return tours
 
@@ -155,7 +169,9 @@ class YardiParser:
     #             ))
     #     return residents
 
-    def _parse_adt_events(self, response: str, property_id: str) -> List[Dict[str, Any]]:
+    def _parse_adt_events(
+        self, response: str, property_id: str
+    ) -> List[Dict[str, Any]]:
         """
         Parses the 'GetSeniorResidentsADTEvents' response.
 
@@ -166,26 +182,34 @@ class YardiParser:
         root = ET.fromstring(response)
         events = []
         for event in root.findall(".//Resident"):
-            lead_id=event.findtext("ExtReference")
-            status="move_in_commitment" if event.findtext("EventType") or "status_unknown" == "Move In" else ""
+            lead_id = event.findtext("ExtReference")
+            status = (
+                "move_in_commitment"
+                if event.findtext("EventType") or "status_unknown" == "Move In"
+                else ""
+            )
             if lead_id not in [None, ""]:
-                events.append(StatusUpdateQueue(
-                    execution_id=self.execution_id,
-                    system_config_id=self.system_config_id,
-                    lead_id=lead_id,
-                    status=status,
-                    sub_status="N/A",
-                    notes=f"Prospect Moved In on {event.findtext('ResidentEventDate')} for property ID {property_id}",
-                    lead_json={
-                        "lead_id": lead_id,
-                        "status": status,
-                        "sub_status": "N/A",
-                        "notes": f"Prospect Moved In on {event.findtext('ResidentEventDate')} for property ID {property_id}",
-                    }
-                ))
+                events.append(
+                    StatusUpdateQueue(
+                        execution_id=self.execution_id,
+                        system_config_id=self.system_config_id,
+                        lead_id=lead_id,
+                        status=status,
+                        sub_status="N/A",
+                        notes=f"Prospect Moved In on {event.findtext('ResidentEventDate')} for property ID {property_id}",
+                        lead_json={
+                            "lead_id": lead_id,
+                            "status": status,
+                            "sub_status": "N/A",
+                            "notes": f"Prospect Moved In on {event.findtext('ResidentEventDate')} for property ID {property_id}",
+                        },
+                    )
+                )
         return events
-    
-    def _parse_prospect_activity(self, response: str, property_id: str) -> List[StatusUpdateQueue]:
+
+    def _parse_prospect_activity(
+        self, response: str, property_id: str
+    ) -> List[StatusUpdateQueue]:
         """
         Parses the 'GetSeniorProspectActivity' response.
 
@@ -200,23 +224,28 @@ class YardiParser:
         for prospect in root.findall(".//Prospect"):
             lead_id = prospect.findtext("ExtReference")
             activity = prospect.find(".//Activity")
-            result_type = activity.findtext("ActivityResultType") if activity is not None else None
+            result_type = (
+                activity.findtext("ActivityResultType")
+                if activity is not None
+                else None
+            )
 
             if lead_id not in [None, ""] and result_type == "Activate":
-                activities.append(StatusUpdateQueue(
-                    execution_id=self.execution_id,
-                    system_config_id=self.system_config_id,
-                    lead_id=lead_id,
-                    status="valid_lead" if result_type == "Activate" else "",
-                    sub_status="timeframe_30",
-                    notes=f"Lead status changed to '{result_type}' on {activity.findtext('ActivityResultDate')} for property ID {property_id}",
-                    lead_json={
-                        "lead_id": lead_id,
-                        "status": "valid_lead" if result_type == "Activate" else "",
-                        "sub_status": "timeframe_30",
-                        "notes": f"Lead status changed to '{result_type}' on {activity.findtext('ActivityResultDate')} for property ID {property_id}",
-                    }
-                ))
+                activities.append(
+                    StatusUpdateQueue(
+                        execution_id=self.execution_id,
+                        system_config_id=self.system_config_id,
+                        lead_id=lead_id,
+                        status="valid_lead" if result_type == "Activate" else "",
+                        sub_status="timeframe_30",
+                        notes=f"Lead status changed to '{result_type}' on {activity.findtext('ActivityResultDate')} for property ID {property_id}",
+                        lead_json={
+                            "lead_id": lead_id,
+                            "status": "valid_lead" if result_type == "Activate" else "",
+                            "sub_status": "timeframe_30",
+                            "notes": f"Lead status changed to '{result_type}' on {activity.findtext('ActivityResultDate')} for property ID {property_id}",
+                        },
+                    )
+                )
 
         return activities
-

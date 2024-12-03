@@ -58,6 +58,8 @@ if __name__ == "__main__":
     )
 
     # Run a query and get the result as JSON
-    query = "SELECT * FROM provider_integration.system_configuration where is_Active=true"
+    query = (
+        "SELECT * FROM provider_integration.system_configuration where is_Active=true"
+    )
     result = postgres.run_query(query)
     print(result)
