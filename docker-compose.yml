@@ -13,6 +13,7 @@ services:
       - RDS_DB_USER=postgres
       - RDS_DB_PASSWORD=postgres
       - RDS_DB_NAME=postgres
+      - AWS_S3_ENDPOINT_URL=http://localstack:4566
     volumes:
       - ./:/app
     depends_on:

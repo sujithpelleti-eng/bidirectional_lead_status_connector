@@ -158,6 +158,8 @@ def fetch_system_configurations(
 
     # Run the query and parse the result
     raw_rows = db.run_query(query)
+    if not raw_rows:
+        raise ValueError("No configurations returned from the database query.")
     try:
         rows = json.loads(raw_rows)  # Parse the JSON string into Python objects
     except json.JSONDecodeError as e:

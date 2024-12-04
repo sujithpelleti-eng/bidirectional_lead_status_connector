@@ -37,7 +37,7 @@ def main():
     parser.add_argument(
         "--partner_id", type=str, help="Partner_id filter for configurations."
     )
-    # parser.add_argument("--post_threshold", type=int, default=10, help="Max retry attempts for posting status updates.")
+    parser.add_argument("--post_threshold", type=int, default=10, help="Max retry attempts for posting status updates.")
     parser.add_argument(
         "--from-date", type=str, help="Start date for data fetch (YYYY-MM-DD)."
     )

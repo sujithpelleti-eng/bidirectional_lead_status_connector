@@ -223,6 +223,7 @@ class Orchestrator:
 
     def run(self):
         """Run the orchestrator, processing each configuration and logging results."""
+        configurations = []  # Default initialization
         try:
             logger.info(
                 f"Starting the execution with execution_id: {self.execution_id}"

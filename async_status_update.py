@@ -46,7 +46,7 @@ class StatusUpdatePoster:
         """
         query = """
             SELECT * FROM provider_integration.status_update_queue
-            WHERE attempts < %s AND is_delivered = FALSE
+            WHERE attempts < %s AND is_delivered = FALSE AND attempts < {self.post_threshold}
         """
         records = self.db.query(query, (self.post_threshold,))
         return [StatusUpdateQueue(**record) for record in records]
