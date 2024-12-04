@@ -15,11 +15,7 @@ This repository contains the code for a system that facilitates the integration 
 - [Overview](#overview)
 - [Repo Structure](#repo-structure)
 - [Setup](#setup)
-- [Database Configuration](#database-configuration)
 - [Usage](#usage)
-- [S3 Configuration](#s3-configuration)
-- [Tips](#tips)
-
 ---
 
 ## Overview
