@@ -71,6 +71,7 @@ class YardiConnector(BaseSOAPConnector):
         logger.info(f"Sending request for {method} with SOAP action: {soap_action}")
         headers = {"Content-Type": "text/xml; charset=utf-8", "SOAPAction": soap_action}
         request_xml = self.build_request(method, body_content)
+        # logger.info(f"Request XML: {request_xml}")
         response = self._send_soap_request(self._base_url, headers, request_xml)
         logger.debug(f"Received response for {method}")
         return response
@@ -126,7 +127,6 @@ class YardiConnector(BaseSOAPConnector):
                 from_date=from_date,
                 to_date=to_date,
             )
-
         return raw_data
 
     def _fetch_tour_activity(
@@ -187,7 +187,7 @@ class YardiConnector(BaseSOAPConnector):
             <Email></Email>
             <FromDate>{from_date}</FromDate>
             <Todate>{to_date}</Todate>
-            <SourceName>Caring.com</SourceName>
+            <SourceName>ex. Caring.com</SourceName>
             <YardiProspectId></YardiProspectId>
             <ActivityCategory>{activity_categoty}</ActivityCategory>
         """
@@ -211,7 +211,7 @@ class YardiConnector(BaseSOAPConnector):
             <YardiPropertyId>{yardi_property_id}</YardiPropertyId>
             <Status>{status}</Status>
             <AsofDate></AsofDate>
-            <SourceName></SourceName>
+            <SourceName>ex. Caring.com</SourceName>
         """
         return self._send_request(
             "GetSeniorResidentsByStatus",
@@ -237,7 +237,7 @@ class YardiConnector(BaseSOAPConnector):
             <InterfaceLicense>{self._credentials['license']}</InterfaceLicense>
             <YardiPropertyId>{yardi_property_id}</YardiPropertyId>
             <EventType>{event_type}</EventType>
-            <SourceName></SourceName>
+            <SourceName>ex. Caring.com</SourceName>
             <FromDate>{from_date}</FromDate>
             <Todate>{to_date}</Todate>
         """
@@ -250,24 +250,13 @@ class YardiConnector(BaseSOAPConnector):
 
 
 if __name__ == "__main__":
-    config = {
-        "api_url": "https://www.yardipcv.com/8223tp7s7snr/WebServices/ItfSeniorResidentData.asmx",
-        "credentials": {
-            "username": "caringws",
-            "password": "W!dummy",
-            "license": "dummy",
-            "ServerName": "afqoml_senior_itf",
-            "Database": "afqoml_senior_itf",
-            "InterfaceEntity": "Caring.com",
-            "YardiPropertyId": ["c1233"],
-        },
-        "base_url": "https://www.yardipcv.com/8223tp7s7snr/WebServices/ItfSeniorResidentData.asmx",
-        "namespace": "http://tempuri.org/YSI.Senior.SeniorInterface.WebServices/ItfSeniorResidentData",
-    }
+    config = {"api_url": "https://www.yardiasp14.com/90183senior/WebServices/ItfSeniorResidentData.asmx", "base_url": "https://www.yardiasp14.com/90183senior/WebServices/ItfSeniorResidentData.asmx", "namespace": "http://tempuri.org/YSI.Senior.SeniorInterface.WebServices/ItfSeniorResidentData", "credentials": {"license": "MIIBEAYJKwYBBAGCN1gDoIIBATCB/gYKKwYBBAGCN1gDAaCB7zCB7AIDAgABAgJoAQICAIAEAAQQ/zrUM5V4Qr2KBVWEc5edvQSByGh5TyWjIKGTM+lVzCjVodDBj+t6QaGH/Sm+Rg4dq8hF6VyrBtoHAR2DUFTAAuVNws/mRdtWozYBDQ6FgDbnpsLJ+jcEpv+FYYtZWWRS0lpkH9DUxMN4OSvGB98kQwzBlKVeSWRGlxJZhG6YAvCbHudnl25BeDFjFKuzq3rov+yKGpYpCEdIKxbn+Pl7sTd1GrpKg8Rf5G1zjkbAiiTNybK0iI+KV6xv08ZX5YkTpm938cmnYgFYCo3OKO5TA2pIjpGeWg2qNgbc", "Database": "dgzjbrzhuc_rcah", "password": "Caring123!", "username": "Caring01", "ServerName": "dgzjbrzhuc_rcah", "InterfaceEntity": "Caring.com", "YardiPropertyId": ["309", "600"]}}
 
     yc = YardiConnector(config)
-    results = yc.fetch_raw_data(from_date="2024-12-01", to_date="2024-12-03")
-    # results = yc.fetch_raw_data(full_refresh=True)
+    # results = yc.fetch_raw_data(from_date="2023-12-01", to_date="2024-12-03")
+    results = yc.fetch_raw_data(
+        full_refresh=True, from_date="2024-10-01", to_date="2024-12-18"
+    )
     # results = yc.fetch_raw_data()
     # print(results)
     yp = YardiParser(1, "65865858585")

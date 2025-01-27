@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import boto3
 
-from common.models import SystemConfiguration
+from common.models import StatusUpdateQueue, SystemConfiguration
 from common.postgres_connector import PostgresDatabase
 
 
@@ -187,8 +187,64 @@ def fetch_system_configurations(
     return configs
 
 
-def fetch_api_config():
-    pass
+def fetch_query_results(
+    db: PostgresDatabase, query: str, params: Tuple = ()
+) -> List[Dict]:
+    """Executes a query that returns results."""
+    try:
+        with db._engine.connect() as connection:
+            result = connection.execute(query, params)
+            return [dict(row) for row in result]  # Convert rows to dictionaries
+    except Exception as e:
+        raise e
+
+
+def update_status_update_record(
+    db: PostgresDatabase,
+    record: StatusUpdateQueue,
+    success: bool,
+    error_message: Optional[str] = None,
+):
+    """
+    Update the status_update_queue record after an attempt.
+
+    :param db: PostgresDatabase instance.
+    :param record: StatusUpdateQueue record.
+    :param success: Whether the post was successful.
+    :param error_message: Error message in case of failure.
+    """
+    query = """
+        UPDATE provider_integration.status_update_queue
+        SET attempts = %s, last_attempt = %s, is_delivered = %s, updated_at = %s, error_message = COALESCE(%s, error_message)
+        WHERE status_update_id = %s
+    """
+
+
+    params = (
+    record.attempts + 1,
+    datetime.now(),
+    success,
+    datetime.now(),
+    error_message,
+    record.status_update_id,
+    )
+    
+    # Print the query and params for debugging
+    formatted_query = query.replace("%s", "{}").format(*[repr(param) for param in params])
+    print("Executing Query:", formatted_query)
+
+    execute_query(
+        db,
+        query,
+        (
+            record.attempts + 1,
+            datetime.now(),
+            success,
+            datetime.now(),
+            error_message,
+            record.status_update_id,
+        ),
+    )
 
 
 if __name__ == "__main__":
@@ -201,6 +257,24 @@ if __name__ == "__main__":
         password=os.getenv("RDS_DB_PASSWORD"),
     )
 
+
+    record = StatusUpdateQueue(
+    status_update_id=2652,
+    execution_id="eb837988-3c3a-42b5-832b-273c80fb62cb",  # Replace with a valid value
+    system_config_id=123,             # Replace with a valid value
+    lead_id="1001",
+    status="moved_in",
+    sub_status="timeframe_30",
+    notes="Test note",
+    lead_json={},
+    attempts=0,
+    last_attempt=None,
+    is_delivered=False,
+    updated_at=datetime.now(),
+    )
+    update_status_update_record(db, record, success=True, error_message=None)
+
+
     # Fetch system configurations using the existing `db` connection
-    config = fetch_system_configurations(db)
-    print(config)
+    # config = fetch_system_configurations(db)
+    # print(config)

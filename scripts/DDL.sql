@@ -67,6 +67,7 @@ CREATE TABLE IF NOT EXISTS provider_integration.status_update_queue (
     attempts INT DEFAULT 0,
     last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     status_to_post BOOLEAN DEFAULT false,
+    error_message VARCHAR(1000),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

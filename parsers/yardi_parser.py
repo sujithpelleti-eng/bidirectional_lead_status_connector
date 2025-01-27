@@ -109,7 +109,7 @@ class YardiParser:
                 start_date = activity.findtext("ActivityStartDate")
                 start_time = activity.findtext("ActivityStartTime", "")
 
-                if result_type and "completed" in result_type.lower():
+                if result_type and "complete" in result_type.lower():
                     status = "tour_completed"
                     notes = (
                         f"Tour completed on {result_date} with result '{result_type}' "
@@ -128,17 +128,16 @@ class YardiParser:
                         system_config_id=self.system_config_id,
                         lead_id=lead_id,
                         status=status,
-                        sub_status="N/A",
+                        sub_status="",
                         notes=notes,
                         lead_json={
                             "lead_id": lead_id,
                             "status": status,
-                            "sub_status": "N/A",
+                            "sub_status": "",
                             "notes": notes,
                         },
                     )
                 )
-
         return tours
 
     # def _parse_senior_residents(self, response: str, property_id: str) -> List[Dict[str, Any]]:
@@ -184,7 +183,7 @@ class YardiParser:
         for event in root.findall(".//Resident"):
             lead_id = event.findtext("ExtReference")
             status = (
-                "move_in_commitment"
+                "moved_in"
                 if event.findtext("EventType") or "status_unknown" == "Move In"
                 else ""
             )
@@ -195,12 +194,12 @@ class YardiParser:
                         system_config_id=self.system_config_id,
                         lead_id=lead_id,
                         status=status,
-                        sub_status="N/A",
+                        sub_status="",
                         notes=f"Prospect Moved In on {event.findtext('ResidentEventDate')} for property ID {property_id}",
                         lead_json={
                             "lead_id": lead_id,
                             "status": status,
-                            "sub_status": "N/A",
+                            "sub_status": "",
                             "notes": f"Prospect Moved In on {event.findtext('ResidentEventDate')} for property ID {property_id}",
                         },
                     )

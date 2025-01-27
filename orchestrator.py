@@ -111,6 +111,7 @@ class Orchestrator:
     def process_configuration(self, config):
         """Process each configuration and log each step's outcome."""
         current_step = "initialization"  # Initialize to a default step
+        error_message = None  # Initialize error_message
         try:
             connector = self.get_connector(config)
             parser = self.get_parser(config, self.execution_id)
@@ -203,7 +204,8 @@ class Orchestrator:
         except Exception as e:
             error_message = str(e)
             logger.error(
-                f"Error processing config {config.system_name}-{config.partner_name}: {error_message}"
+                f"Error processing config {config.system_name}-{config.partner_name}: {error_message}",
+                exc_info=True,
             )
             log_step_detail(
                 db=self.db,

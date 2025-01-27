@@ -6,7 +6,6 @@ from datetime import datetime, timedelta
 
 from async_status_update import StatusUpdatePoster
 from common.postgres_connector import PostgresDatabase
-from common.utils import fetch_api_config
 from orchestrator import Orchestrator
 
 # Set up logging
@@ -37,7 +36,12 @@ def main():
     parser.add_argument(
         "--partner_id", type=str, help="Partner_id filter for configurations."
     )
-    parser.add_argument("--post_threshold", type=int, default=10, help="Max retry attempts for posting status updates.")
+    parser.add_argument(
+        "--post_threshold",
+        type=int,
+        default=10,
+        help="Max retry attempts for posting status updates.",
+    )
     parser.add_argument(
         "--from-date", type=str, help="Start date for data fetch (YYYY-MM-DD)."
     )
@@ -89,16 +93,8 @@ def main():
         )
         orchestrator.run()
     elif args.action == "post_status_updates":
-        # Fetch the API configuration dynamically
-        api_config = fetch_api_config(db, system=args.system, partner=args.partner)
-        if not api_config:
-            logger.error("No API configuration found for the specified parameters.")
-            sys.exit(1)
-
         # Run the Status Update Poster
-        poster = StatusUpdatePoster(
-            db, config=api_config, post_threshold=args.post_threshold
-        )
+        poster = StatusUpdatePoster(db, post_threshold=args.post_threshold)
         poster.process_updates()
 
 

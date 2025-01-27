@@ -41,6 +41,7 @@ class ErrorLog:
 
 @dataclass
 class StatusUpdateQueue:
+    status_update_id: int
     execution_id: str
     system_config_id: int
     lead_id: str
@@ -48,14 +49,12 @@ class StatusUpdateQueue:
     sub_status: str
     notes: str
     lead_json: Dict
+    error_message: Optional[str] = None
     attempts: int = 0
     last_attempt: Optional[datetime] = field(default_factory=lambda: datetime.now())
     is_delivered: bool = False
     created_at: datetime = field(default_factory=lambda: datetime.now())
     updated_at: datetime = field(default_factory=lambda: datetime.now())
-    status_update_id: Optional[
-        int
-    ] = None  # Optional fields with defaults should go last
 
     def to_tuple(self):
         """
@@ -72,4 +71,5 @@ class StatusUpdateQueue:
             self.attempts,
             self.last_attempt,
             self.is_delivered,
+            self.error_message,
         )
