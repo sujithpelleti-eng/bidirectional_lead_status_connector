@@ -181,6 +181,10 @@ def fetch_system_configurations(
             credentials_secret_id=row.get("credentials_secret_id"),
             schedule=row.get("schedule"),
             is_active=row.get("is_active"),
+            feature_flags=row.get("feature_flags")
+            if isinstance(row.get("feature_flags"), dict)
+            else json.loads(row.get("feature_flags")),
+
         )
         for row in rows
     ]
@@ -230,8 +234,8 @@ def update_status_update_record(
     )
     
     # Print the query and params for debugging
-    formatted_query = query.replace("%s", "{}").format(*[repr(param) for param in params])
-    print("Executing Query:", formatted_query)
+    # formatted_query = query.replace("%s", "{}").format(*[repr(param) for param in params])
+    # print("Executing Query:", formatted_query)
 
     execute_query(
         db,

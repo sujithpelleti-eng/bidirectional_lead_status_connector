@@ -14,6 +14,7 @@ CREATE TABLE IF NOT EXISTS provider_integration.system_configuration (
     credentials_secret_id VARCHAR(255) NOT NULL, -- Reference to AWS Secrets Manager
     schedule VARCHAR(255) DEFAULT 'Daily EOD' NOT NULL,
     is_active BOOLEAN DEFAULT true NOT NULL,
+    feature_flags JSONB NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -58,17 +59,20 @@ CREATE TABLE IF NOT EXISTS provider_integration.run_history_detail (
 -- Queue table for asynchronous processing
 CREATE TABLE IF NOT EXISTS provider_integration.status_update_queue (
     execution_id UUID NOT NULL,
+    system_config_id INT not null,
     status_update_id SERIAL PRIMARY KEY,
+    community_code VARCHAR(255) NOT NULL,
     lead_id VARCHAR(255) NOT NULL,
     status VARCHAR(50) NOT NULL,
     sub_status VARCHAR(50),
     notes TEXT,
+    lead_json JSONB,
     provider VARCHAR(255),
     attempts INT DEFAULT 0,
     last_attempt TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    is_delivered BOOLEAN DEFAULT false,
     status_to_post BOOLEAN DEFAULT false,
     error_message VARCHAR(1000),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
-

@@ -16,6 +16,7 @@ class SystemConfiguration:
     credentials_secret_id: str
     schedule: str
     is_active: str
+    feature_flags: Dict
 
 
 @dataclass
@@ -41,14 +42,15 @@ class ErrorLog:
 
 @dataclass
 class StatusUpdateQueue:
-    status_update_id: int
     execution_id: str
     system_config_id: int
+    community_code: str
     lead_id: str
     status: str
     sub_status: str
     notes: str
     lead_json: Dict
+    status_update_id: Optional[int] = None
     error_message: Optional[str] = None
     attempts: int = 0
     last_attempt: Optional[datetime] = field(default_factory=lambda: datetime.now())
@@ -63,6 +65,7 @@ class StatusUpdateQueue:
         return (
             self.execution_id,
             self.system_config_id,
+            self.community_code,
             self.lead_id,
             self.status,
             self.sub_status,

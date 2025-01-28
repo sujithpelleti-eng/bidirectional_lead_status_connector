@@ -13,9 +13,10 @@ class BaseSOAPConnector(ABC):
     for sending SOAP requests.
     """
 
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, feature_flags: dict):
         self._api_url = config.get("api_url")
         self._credentials = config.get("credentials")
+        self._enabled_methods = feature_flags.get("methods")
         # logger.info("Initialized BaseSOAPConnector with provided configuration.")
 
     @abstractmethod

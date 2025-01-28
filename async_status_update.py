@@ -68,7 +68,7 @@ class StatusUpdatePoster:
             )
             SELECT 
                 status_update_id, execution_id, system_config_id, lead_id, 
-                status, sub_status, notes, lead_json, 
+                status, sub_status, notes, lead_json, community_code,
                 attempts, last_attempt, is_delivered, updated_at 
             FROM ranked_records
             WHERE rank = 1;

@@ -18,17 +18,18 @@ logger = logging.getLogger(__name__)
 
 
 class YardiConnector(BaseSOAPConnector):
-    def __init__(self, config: dict):
+    def __init__(self, config: dict, feature_flags: dict):
         """
         Initializes the YardiConnector with configuration parameters and sets up the parser.
 
         :param config: Configuration dictionary containing API URL, _credentials, and namespace.
         """
-        super().__init__(config)
+        super().__init__(config, feature_flags)
         self._api_url = config.get("api_url")
         self._credentials = config.get("credentials")
         self._namespace = config.get("namespace")
         self._base_url = config.get("base_url")
+        self._enabled_methods = feature_flags.get("methods")
 
         # self._api_url = config.get('api_url')
         # self._credentials = config.get('_credentials')  # Ensure this is properly set
@@ -103,30 +104,42 @@ class YardiConnector(BaseSOAPConnector):
 
         for yardi_property_id in self._credentials["YardiPropertyId"]:
             logger.info(f"Processing YardiPropertyId: {yardi_property_id}")
-            raw_data["GetSeniorProspectActivity_tour_activity"][
-                yardi_property_id
-            ] = self._fetch_tour_activity(
-                yardi_property_id=yardi_property_id,
-                activity_categoty="Tours",
-                from_date=from_date,
-                to_date=to_date,
-            )
-            raw_data["GetSeniorResidentsADTEvents_movein"][
-                yardi_property_id
-            ] = self._fetch_adt_events(
-                yardi_property_id=yardi_property_id,
-                event_type="Move In",
-                from_date=from_date,
-                to_date=to_date,
-            )
-            raw_data["GetSeniorProspectActivity_valid_lead"][
-                yardi_property_id
-            ] = self._fetch_lead_status_change(
-                yardi_property_id=yardi_property_id,
-                activity_categoty="Status Change",
-                from_date=from_date,
-                to_date=to_date,
-            )
+
+            if self._enabled_methods.get("GetSeniorProspectActivity_tour_activity"):
+                raw_data["GetSeniorProspectActivity_tour_activity"][
+                    yardi_property_id
+                ] = self._fetch_tour_activity(
+                    yardi_property_id=yardi_property_id,
+                    activity_categoty="Tours",
+                    from_date=from_date,
+                    to_date=to_date,
+                )
+            else:
+                logger.info("Skipping the GetSeniorProspectActivity_tour_activity method for {yardi_property_id}")
+
+            if self._enabled_methods.get("GetSeniorResidentsADTEvents_movein"):
+                raw_data["GetSeniorResidentsADTEvents_movein"][
+                    yardi_property_id
+                ] = self._fetch_adt_events(
+                    yardi_property_id=yardi_property_id,
+                    event_type="Move In",
+                    from_date=from_date,
+                    to_date=to_date,
+                )
+            else:
+                logger.info("Skipping the GetSeniorResidentsADTEvents_movein method for {yardi_property_id}")
+
+            if self._enabled_methods.get("GetSeniorProspectActivity_valid_lead"):
+                raw_data["GetSeniorProspectActivity_valid_lead"][
+                    yardi_property_id
+                ] = self._fetch_lead_status_change(
+                    yardi_property_id=yardi_property_id,
+                    activity_categoty="Status Change",
+                    from_date=from_date,
+                    to_date=to_date,
+                )
+            else:
+                logger.info("Skipping the GetSeniorProspectActivity_valid_lead method for {yardi_property_id}")
         return raw_data
 
     def _fetch_tour_activity(

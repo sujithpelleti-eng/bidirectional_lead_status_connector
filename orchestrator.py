@@ -93,7 +93,7 @@ class Orchestrator:
 
     def get_connector(self, config: SystemConfiguration):
         if config.system_name == "Yardi":
-            return YardiConnector(config.config)
+            return YardiConnector(config.config, config.feature_flags)
         else:
             raise Exception(f"Unsupported system: {config.system_name}")
 
@@ -116,91 +116,107 @@ class Orchestrator:
             connector = self.get_connector(config)
             parser = self.get_parser(config, self.execution_id)
             destinations = self.get_destinations(config)
+            feature_flags = config.feature_flags
+            steps = feature_flags.get('steps')
 
             # Step 1: Fetch data
-            current_step = "fetch_data"
-            fetch_start_time = datetime.now()
-            raw_data = connector.fetch_raw_data(
-                from_date=self.from_date, to_date=self.to_date
-            )
-            logger.info(f"Data type for {current_step}: {type(raw_data)}")
-            log_step_detail(
-                db=self.db,
-                run_id=self.run_id,
-                execution_id=self.execution_id,
-                system_config_id=config.system_config_id,
-                system_name=config.system_name,
-                partner_name=config.partner_name,
-                step=current_step,
-                status="success",
-                records_fetched=len(raw_data),
-                start_time=fetch_start_time,
-                end_time=datetime.now(),
-            )
+            if steps.get('fetch_data'):
+                current_step = "fetch_data"
+                fetch_start_time = datetime.now()
+                raw_data = connector.fetch_raw_data(
+                    from_date=self.from_date, to_date=self.to_date
+                )
+                logger.info(f"Data type for {current_step}: {type(raw_data)}")
+                log_step_detail(
+                    db=self.db,
+                    run_id=self.run_id,
+                    execution_id=self.execution_id,
+                    system_config_id=config.system_config_id,
+                    system_name=config.system_name,
+                    partner_name=config.partner_name,
+                    step=current_step,
+                    status="success",
+                    records_fetched=len(raw_data),
+                    start_time=fetch_start_time,
+                    end_time=datetime.now(),
+                )
+            else:
+                logger.info(f"Skipping fetch_data step for {config.partner_name}")
 
             # Step 2: Insert raw data to S3 before parsing
-            current_step = "store_raw_data_s3"
-            for destination in destinations:
-                if isinstance(destination, S3Destination):
-                    s3_start_time = datetime.now()
-                    destination.send(
-                        raw_data,
-                        provider=config.system_name,
-                        partner_id=config.partner_id,
-                        file_type=config.file_type,
-                    )
-                    log_step_detail(
-                        db=self.db,
-                        run_id=self.run_id,
-                        execution_id=self.execution_id,
-                        system_config_id=config.system_config_id,
-                        system_name=config.system_name,
-                        partner_name=config.partner_name,
-                        step=current_step,
-                        status="success",
-                        records_fetched=len(raw_data),
-                        start_time=s3_start_time,
-                        end_time=datetime.now(),
-                    )
+            if steps.get('store_raw_data_s3'):
+                current_step = "store_raw_data_s3"
+                for destination in destinations:
+                    if isinstance(destination, S3Destination):
+                        s3_start_time = datetime.now()
+                        destination.send(
+                            raw_data,
+                            provider=config.system_name,
+                            partner_id=config.partner_id,
+                            file_type=config.file_type,
+                        )
+                        log_step_detail(
+                            db=self.db,
+                            run_id=self.run_id,
+                            execution_id=self.execution_id,
+                            system_config_id=config.system_config_id,
+                            system_name=config.system_name,
+                            partner_name=config.partner_name,
+                            step=current_step,
+                            status="success",
+                            records_fetched=len(raw_data),
+                            start_time=s3_start_time,
+                            end_time=datetime.now(),
+                        )
+            else:
+                logger.info(f"Skipping store_raw_data_s3 step for {config.partner_name}")
+                
 
             # Step 3: Parse data
-            current_step = "parse_data"
-            parse_start_time = datetime.now()
-            logger.info(f"Creating parser with execution_id: {self.execution_id}")
-            parsed_data = parser.parse(raw_data)
-            log_step_detail(
-                db=self.db,
-                run_id=self.run_id,
-                execution_id=self.execution_id,
-                system_config_id=config.system_config_id,
-                system_name=config.system_name,
-                partner_name=config.partner_name,
-                step=current_step,
-                status="success",
-                records_fetched=len(parsed_data),
-                start_time=parse_start_time,
-                end_time=datetime.now(),
-            )
+            if steps.get("parse_data"):
+                current_step = "parse_data"
+                parse_start_time = datetime.now()
+                logger.info(f"Creating parser with execution_id: {self.execution_id}")
+                parsed_data = parser.parse(raw_data)
+                log_step_detail(
+                    db=self.db,
+                    run_id=self.run_id,
+                    execution_id=self.execution_id,
+                    system_config_id=config.system_config_id,
+                    system_name=config.system_name,
+                    partner_name=config.partner_name,
+                    step=current_step,
+                    status="success",
+                    records_fetched=len(parsed_data),
+                    start_time=parse_start_time,
+                    end_time=datetime.now(),
+                )
+            else:
+                logger.info(f"Skipping parse_data step for {config.partner_name}")
 
             # Step 4: Send parsed data to RDS
-            current_step = "send_data_to_rds"
-            send_start_time = datetime.now()
-            for destination in destinations:
-                if isinstance(destination, RDSDestination):
-                    destination.send(parsed_data)
-                    log_step_detail(
-                        db=self.db,
-                        run_id=self.run_id,
-                        execution_id=self.execution_id,
-                        system_config_id=config.system_config_id,
-                        system_name=config.system_name,
-                        partner_name=config.partner_name,
-                        step=current_step,
-                        status="success",
-                        records_success=len(parsed_data),
-                        start_time=send_start_time,
-                        end_time=datetime.now(),
-                    )
+            if steps.get("send_data_to_rds"):
+                current_step = "send_data_to_rds"
+                send_start_time = datetime.now()
+                for destination in destinations:
+                    if isinstance(destination, RDSDestination):
+                        destination.send(parsed_data)
+                        log_step_detail(
+                            db=self.db,
+                            run_id=self.run_id,
+                            execution_id=self.execution_id,
+                            system_config_id=config.system_config_id,
+                            system_name=config.system_name,
+                            partner_name=config.partner_name,
+                            step=current_step,
+                            status="success",
+                            records_success=len(parsed_data),
+                            start_time=send_start_time,
+                            end_time=datetime.now(),
+                        )
+            else:
+                logger.info(f"Skipping send_data_to_rds step for {config.partner_name}")
+            
         except Exception as e:
             error_message = str(e)
             logger.error(

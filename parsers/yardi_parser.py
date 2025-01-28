@@ -126,6 +126,7 @@ class YardiParser:
                     StatusUpdateQueue(
                         execution_id=self.execution_id,
                         system_config_id=self.system_config_id,
+                        community_code=property_id,
                         lead_id=lead_id,
                         status=status,
                         sub_status="",
@@ -192,6 +193,7 @@ class YardiParser:
                     StatusUpdateQueue(
                         execution_id=self.execution_id,
                         system_config_id=self.system_config_id,
+                        community_code=property_id,
                         lead_id=lead_id,
                         status=status,
                         sub_status="",
@@ -234,6 +236,7 @@ class YardiParser:
                     StatusUpdateQueue(
                         execution_id=self.execution_id,
                         system_config_id=self.system_config_id,
+                        community_code=property_id,
                         lead_id=lead_id,
                         status="valid_lead" if result_type == "Activate" else "",
                         sub_status="timeframe_30",

@@ -91,8 +91,8 @@ class RDSDestination:
         # SQL for bulk insert
         insert_query = f"""
             INSERT INTO {self._table_name} 
-            (execution_id, system_config_id, lead_id, status, sub_status, notes, lead_json, attempts, last_attempt, is_delivered)
-            VALUES (%(execution_id)s, %(system_config_id)s, %(lead_id)s, %(status)s, %(sub_status)s, %(notes)s, %(lead_json)s, %(attempts)s, %(last_attempt)s, %(is_delivered)s)
+            (execution_id, system_config_id, community_code, lead_id, status, sub_status, notes, lead_json, attempts, last_attempt, is_delivered)
+            VALUES (%(execution_id)s, %(system_config_id)s, %(community_code)s, %(lead_id)s, %(status)s, %(sub_status)s, %(notes)s, %(lead_json)s, %(attempts)s, %(last_attempt)s, %(is_delivered)s)
         """
 
         try:
@@ -110,6 +110,7 @@ if __name__ == "__main__":
     sample_data = [
         StatusUpdateQueue(
             system_config_id=1,
+            community_code="c1232",
             lead_id="1234",
             status="valid_lead",
             sub_status="timeframe_30",
