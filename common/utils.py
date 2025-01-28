@@ -1,5 +1,6 @@
 import json
 import os
+import logging
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -8,6 +9,11 @@ import boto3
 from common.models import StatusUpdateQueue, SystemConfiguration
 from common.postgres_connector import PostgresDatabase
 
+# Set up logging
+logging.basicConfig(
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 def execute_query(db: PostgresDatabase, query: str, params: Tuple = ()):
     """Executes a query that does not return a result, like an UPDATE or INSERT."""
@@ -216,39 +222,44 @@ def update_status_update_record(
     :param record: StatusUpdateQueue record.
     :param success: Whether the post was successful.
     :param error_message: Error message in case of failure.
+    :raises ValueError: If record is None or status_update_id is invalid
     """
+    if not record or not record.status_update_id:
+        raise ValueError("Invalid record or status_update_id")
+
+    if error_message and len(error_message) > 1000:  # adjust max length as needed
+        error_message = error_message[:997] + "..."
+
     query = """
         UPDATE provider_integration.status_update_queue
-        SET attempts = %s, last_attempt = %s, is_delivered = %s, updated_at = %s, error_message = COALESCE(%s, error_message)
+        SET attempts = %s, 
+            last_attempt = %s, 
+            is_delivered = %s, 
+            updated_at = %s, 
+            error_message = CASE 
+                WHEN %s IS NOT NULL THEN %s 
+                ELSE error_message 
+            END
         WHERE status_update_id = %s
+        RETURNING status_update_id
     """
-
-
-    params = (
-    record.attempts + 1,
-    datetime.now(),
-    success,
-    datetime.now(),
-    error_message,
-    record.status_update_id,
-    )
     
-    # Print the query and params for debugging
-    # formatted_query = query.replace("%s", "{}").format(*[repr(param) for param in params])
-    # print("Executing Query:", formatted_query)
-
-    execute_query(
-        db,
-        query,
-        (
-            record.attempts + 1,
-            datetime.now(),
-            success,
-            datetime.now(),
-            error_message,
-            record.status_update_id,
-        ),
+    current_time = datetime.now()
+    params = (
+        record.attempts + 1,
+        current_time,
+        success,
+        current_time,
+        error_message,  # For the CASE WHEN check
+        error_message,  # For the actual value
+        record.status_update_id,
     )
+
+    logger.debug("Executing status update with params: %s", params)
+    
+    result = execute_query_returning_id(db, query, params)
+    if not result:
+        logger.warning("No record updated for status_update_id: %s", record.status_update_id)
 
 
 if __name__ == "__main__":

@@ -15,6 +15,22 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+def validate_dates(from_date: str, to_date: str) -> bool:
+    try:
+        from_dt = datetime.strptime(from_date, "%Y-%m-%d")
+        to_dt = datetime.strptime(to_date, "%Y-%m-%d")
+        if from_dt > to_dt:
+            logger.error("From date cannot be after to date")
+            return False
+        if to_dt > datetime.now():
+            logger.error("To date cannot be in the future")
+            return False
+        return True
+    except ValueError:
+        logger.error("Invalid date format. Use YYYY-MM-DD")
+        return False
+
+
 def main():
     """
     Main function to control the flow based on command-line arguments.
@@ -55,6 +71,10 @@ def main():
     )
 
     args = parser.parse_args()
+    
+    if args.from_date and args.to_date:
+        if not validate_dates(args.from_date, args.to_date):
+            sys.exit(1)
 
     # Calculate dates if not provided
     from_date, to_date = None, None
