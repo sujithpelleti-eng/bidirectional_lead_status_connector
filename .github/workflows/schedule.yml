@@ -1,0 +1,35 @@
+name: Scheduled Script Run
+
+on:
+  schedule:
+    - cron: '45 7,17 * * *'
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  run_schedule:
+    runs-on: ubuntu-latest
+    environment: caring-dev
+    steps:
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ACCOUNT_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: us-east-1
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2.0.1
+      - name: install and configure the ssh-agent
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.BASTION_HOST_SSH_ID }}
+      - name: Open SSH Tunnel to DBconsole Bastion host
+        run: ssh -o StrictHostKeyChecking=no -tt -L 3306:${{ vars.RDS_DB_REMOTE_HOST }}:3306 github-actions@${{ vars.BASTION_HOST_ADDRESS }} &
+      - name: Open SSH Tunnel to Canary Bastion host
+        run: ssh -o StrictHostKeyChecking=no -tt -L 5432:canario-db-replica.csokkjcgv0yx.us-east-1.rds.amazonaws.com:5432 github-actions@canary-bastion.caring.com &      
+      - name: Schedule execution
+        run: |
+          FULL_IMAGE_NAME_LATEST="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com/caring-data-guard:latest"
+          docker run --net=host $FULL_IMAGE_NAME_LATEST python main.py --action orchestrator --full-refresh

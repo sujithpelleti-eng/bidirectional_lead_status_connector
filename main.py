@@ -84,10 +84,14 @@ def main():
         logger.info(
             f"Full refresh selected: Fetching data from {from_date} to {to_date}"
         )
-    elif args.from_date and args.to_date:
-        from_date = args.from_date
-        to_date = args.to_date
-        logger.info(f"Custom date range: Fetching data from {from_date} to {to_date}")
+    elif args.from_date:
+        from_date = f"{args.from_date}T00:00:00"
+        to_date = datetime.now().strftime("%Y-%m-%dT00:00:00")
+        logger.info(f"Custom start date: Fetching data from {from_date} to {to_date}")
+    elif args.to_date:
+        from_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%dT00:00:00")
+        to_date = f"{args.to_date}T00:00:00"
+        logger.info(f"Custom end date: Fetching data from {from_date} to {to_date}")
     else:
         from_date = (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%dT00:00:00")
         to_date = datetime.now().strftime("%Y-%m-%dT00:00:00")

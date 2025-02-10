@@ -115,7 +115,7 @@ class YardiConnector(BaseSOAPConnector):
                     to_date=to_date,
                 )
             else:
-                logger.info("Skipping the GetSeniorProspectActivity_tour_activity method for {yardi_property_id}")
+                logger.info(f"Skipping the GetSeniorProspectActivity_tour_activity method for PropertyID : {yardi_property_id}")
 
             if self._enabled_methods.get("GetSeniorResidentsADTEvents_movein"):
                 raw_data["GetSeniorResidentsADTEvents_movein"][
@@ -127,7 +127,7 @@ class YardiConnector(BaseSOAPConnector):
                     to_date=to_date,
                 )
             else:
-                logger.info("Skipping the GetSeniorResidentsADTEvents_movein method for {yardi_property_id}")
+                logger.info(f"Skipping the GetSeniorResidentsADTEvents_movein method for PropertyID : {yardi_property_id}")
 
             if self._enabled_methods.get("GetSeniorProspectActivity_valid_lead"):
                 raw_data["GetSeniorProspectActivity_valid_lead"][
@@ -139,7 +139,7 @@ class YardiConnector(BaseSOAPConnector):
                     to_date=to_date,
                 )
             else:
-                logger.info("Skipping the GetSeniorProspectActivity_valid_lead method for {yardi_property_id}")
+                logger.info(f"Skipping the GetSeniorProspectActivity_valid_lead method for PropertyID : {yardi_property_id}")
         return raw_data
 
     def _fetch_tour_activity(
