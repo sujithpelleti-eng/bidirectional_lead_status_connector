@@ -2,7 +2,7 @@ name: Main workflow
 
 on:
   pull_request:
-    branches: [ "PI-25-Dev-env-setup" ]
+    branches: [ "main" ]
     types: [opened, synchronize, reopened]
 
 jobs:
