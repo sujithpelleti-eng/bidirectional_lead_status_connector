@@ -127,7 +127,7 @@ CREATE SCHEMA provider_integration;
 ### Step 6: Create the S3 Bucket using the below commands in local stack
 ```bash
 # Create the bucket
-aws --endpoint-url=http://localhost:4566 s3 mb s3://yardi-bucket
+aws --endpoint-url=http://localhost:4566 s3 mb s3://caring-provider-integrations
 
 #Verify the bucket
 aws --endpoint-url=http://localhost:4566 s3 ls
