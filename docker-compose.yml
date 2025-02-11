@@ -1,0 +1,50 @@
+version: '3.7'
+
+services:
+  bidirectional_integration:
+    build: .
+    image: "bidirectional_integration"
+    container_name: "bidirectional_integration"
+    # command: python main.py
+    env_file: config/.env
+    environment:
+          # Overwrite any setting from .env that needs to match the sibling containers config
+      - RDS_DB_HOST=host.docker.internal
+      - RDS_DB_USER=postgres
+      - RDS_DB_PASSWORD=postgres
+      - RDS_DB_NAME=postgres
+      - AWS_S3_ENDPOINT_URL=http://localstack:4566
+    volumes:
+      - ./:/app
+    depends_on:
+      - postgres_db
+      - localstack
+
+  localstack:
+    image: localstack/localstack:0.13.2
+    ports:
+      - '4566:4566'
+    environment:
+      - SERVICES=s3,sqs,sts
+      - AWS_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=dummy
+      - AWS_SECRET_ACCESS_KEY=dummy
+      - AWS_SESSION_TOKEN=dummy
+      - AWS_S3_ENDPOINT_URL=http://localhost:4566
+
+
+  postgres_db:
+      image: postgres:13
+      container_name: pg01_bidirectional_integration
+      environment:
+          - POSTGRES_PASSWORD=postgres
+          - POSTGRES_USER=postgres
+          - POSTGRES_DB=postgres
+      ports:
+          - "5432:5432"
+      volumes:
+        - pgdata:/var/lib/postgresql/data/
+        
+volumes:
+  pgdata:

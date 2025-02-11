@@ -1,0 +1,80 @@
+name: Build and Push docker image
+
+permissions:
+  id-token: write
+  contents: read
+
+on:
+ workflow_call:
+    inputs:
+      environment:
+        description: The environment to deploy to
+        type: string
+        required: true
+      aws-region:
+        description: The AWS region to deploy to
+        type: string
+        default: "us-east-1"
+      runs-on:
+        description: The label of the runner to run the job on
+        type: string
+        required: true
+      version:
+        description: The version of the service to deploy
+        type: string
+        required: true
+      service-name:
+        description: The name of the service
+        type: string
+        required: true
+    secrets:
+      AWS_ACCOUNT_GITHUB_ACTIONS_ROLE_ARN:
+        description: The IAM role to assume
+        required: true
+
+jobs:
+  build-and-push-docker-image:
+    runs-on: ${{ inputs.runs-on }}
+    environment: ${{ inputs.environment }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ACCOUNT_GITHUB_ACTIONS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Set up Environment Variables
+        run: |
+          FULL_IMAGE_NAME_COMMIT="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com/${{ inputs.service-name }}:${{ github.sha }}"
+          FULL_IMAGE_NAME_LATEST="${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com/${{ inputs.service-name }}:latest"
+          echo "FULL_IMAGE_NAME_COMMIT=${FULL_IMAGE_NAME_COMMIT}" >> $GITHUB_ENV
+          echo "FULL_IMAGE_NAME_LATEST=${FULL_IMAGE_NAME_LATEST}" >> $GITHUB_ENV
+
+      - name: Build Docker Image
+        run: |
+          export DOCKER_BUILDKIT=1
+          docker build \
+            -f Dockerfile \
+            --build-arg RDS_DB_HOST=${{ vars.RDS_DB_HOST }} \
+            --build-arg RDS_DB_PORT=${{ vars.RDS_DB_PORT }} \
+            --build-arg RDS_DB_USER=${{ vars.RDS_DB_USER }} \
+            --build-arg RDS_DB_PASSWORD=${{ secrets.RDS_DB_PASSWORD }} \
+            --build-arg RDS_DB_NAME=${{ vars.RDS_DB_NAME }} \
+            --build-arg AWS_S3_ENDPOINT_URL=${{ vars.AWS_S3_ENDPOINT_URL }} \
+            --build-arg AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} \
+            --build-arg AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} \
+            --build-arg AWS_DEFAULT_REGION=${{ vars.AWS_DEFAULT_REGION }} \
+            -t $FULL_IMAGE_NAME_COMMIT -t $FULL_IMAGE_NAME_LATEST . \
+
+      - name: Log in to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2.0.1
+
+      - name: Push Docker Image to Amazon ECR
+        run: |
+          docker push $FULL_IMAGE_NAME_COMMIT
+          docker push $FULL_IMAGE_NAME_LATEST
+          

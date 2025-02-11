@@ -1,0 +1,16 @@
+name: Main workflow
+
+on:
+  pull_request:
+    branches: [ "PI-25-Dev-env-setup" ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  call-build-and-push-docker-image:
+    uses: ./.github/workflows/build-and-push.yml
+    with:
+      environment: caring-dev
+      runs-on: ubuntu-latest
+      version: "0.10"
+      service-name: bidirectional-lead-status-connector
+    secrets: inherit
