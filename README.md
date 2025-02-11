@@ -6,7 +6,7 @@ Quick Links: [AWS CLI](https://aws.amazon.com/cli/) | [Docker Desktop](https://w
 
 # Bidirectional Lead Status Connector
 
-This repository contains the code for a system that facilitates the integration of lead status updates from external systems (e.g., Yardi) into internal databases and vice versa. It supports data fetching, processing, and posting updates dynamically, with a focus on extensibility and configurability.
+This repository contains the code for a system that facilitates the integration of lead status updates from external systems (e.g., Yardi) into internal databases and vice versa. It supports data fetching, processing, and posting updates dynamically, with a focus on extensibility and configurability.  
 
 ---
 
